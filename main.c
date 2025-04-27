@@ -17,7 +17,7 @@ void initializeBoard(int size)
     }
 }
 
-// print the sudoku board
+// print the Sudoku board
 void printBoard(int size)
 {
     for (int i = 0; i < size; i++)
@@ -113,12 +113,47 @@ void fillDiagonal()
     }
 }
 
+// recursively fill remaining cells
+int fillRemaining(int i, int j)
+{
+    if (i == 9)
+    {
+        return 1;
+    }
+    if (j == 9)
+    {
+        return fillRemaining(i + 1, 0);
+    }
+    if (board[i][j] != 0)
+    {
+        return fillRemaining(i, j + 1);
+    }
+
+    for (int num = 1; num <= 9; num++)
+    {
+        if (checkIfSafe(9, i, j, num))
+        {
+            board[i][j] = num;
+            if (fillRemaining(i, j + 1))
+            {
+                return 1;
+            }
+            board[i][j] = 0;
+        }
+    }
+
+    return 0;
+}
+
 int main()
 {
+    srand(time(0));
     printf("sudoku\n");
 
     int size = 9;
     initializeBoard(size);
+    fillDiagonal();
+    fillRemaining(0, 0);
     printBoard(size);
 
     return 0;
