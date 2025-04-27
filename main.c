@@ -277,6 +277,22 @@ void deleteMove(int size)
     }
 }
 
+// check if the board is completely filled
+int checkWin(int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (board[i][j] == 0)
+            {
+                return 0; // not finished yet
+            }
+        }
+    }
+    return 1; // board filled
+}
+
 void menu()
 {
     int choice;
@@ -333,6 +349,11 @@ void menu()
         {
             playerMove(currentSize);
             printBoard(currentSize);
+            if (checkWin(currentSize))
+            {
+                printf("CONGRATULATIONS!!!!!!! You completed the Sudoku:)\n");
+                break;
+            }
         }
         else if (choice == 7)
         {
@@ -345,7 +366,7 @@ void menu()
         }
         else
         {
-            printf("Invalid choice. Please try again.\n");
+            printf("Invalid choice. Please try again!\n");
         }
     } while (choice != 8);
 }
