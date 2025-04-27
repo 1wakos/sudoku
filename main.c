@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #define MAX_SIZE 16
 
 int board[MAX_SIZE][MAX_SIZE];
@@ -83,6 +85,32 @@ int checkIfSafe(int size, int row, int col, int num)
     return unUsedInRow(size, row, num) &&
            unUsedInCol(size, col, num) &&
            unUsedInBox(row - row % 3, col - col % 3, num);
+}
+
+// fill a 3x3 box starting at (rowStart, colStart)
+void fillBox(int rowStart, int colStart)
+{
+    int num;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            do
+            {
+                num = rand() % 9 + 1;
+            } while (!unUsedInBox(rowStart, colStart, num));
+            board[rowStart + i][colStart + j] = num;
+        }
+    }
+}
+
+// fill diagonal 3x3 boxes
+void fillDiagonal()
+{
+    for (int i = 0; i < 9; i += 3)
+    {
+        fillBox(i, i);
+    }
 }
 
 int main()
