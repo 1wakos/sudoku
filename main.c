@@ -17,7 +17,7 @@ void initializeBoard(int size)
     }
 }
 
-// print the Sudoku board
+// print the sudoku board
 void printBoard(int size)
 {
     for (int i = 0; i < size; i++)
@@ -145,15 +145,33 @@ int fillRemaining(int i, int j)
     return 0;
 }
 
+// remove k digits randomly to create a puzzle
+void removeKDigits(int k)
+{
+    while (k > 0)
+    {
+        int cellId = rand() % 81;
+        int i = cellId / 9;
+        int j = cellId % 9;
+        if (board[i][j] != 0)
+        {
+            board[i][j] = 0;
+            k--;
+        }
+    }
+}
+
 int main()
 {
     srand(time(0));
     printf("sudoku\n");
 
     int size = 9;
+    int k = 20; // number of digits to remove
     initializeBoard(size);
     fillDiagonal();
     fillRemaining(0, 0);
+    removeKDigits(k);
     printBoard(size);
 
     return 0;
