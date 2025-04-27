@@ -228,6 +228,30 @@ void loadGame()
     printBoard(currentSize);
 }
 
+// allow player to input a move
+void playerMove(int size)
+{
+    int row, col, val;
+    printf("Enter row (0-%d), column (0-%d), and value (1-%d): ", size - 1, size - 1, size);
+    scanf("%d %d %d", &row, &col, &val);
+
+    if (row >= 0 && row < size && col >= 0 && col < size && val >= 1 && val <= size)
+    {
+        if (board[row][col] == 0)
+        {
+            board[row][col] = val;
+        }
+        else
+        {
+            printf("Cell already filled. Choose another one!\n");
+        }
+    }
+    else
+    {
+        printf("Invalid input!\n");
+    }
+}
+
 void menu()
 {
     int choice;
@@ -241,7 +265,8 @@ void menu()
         printf("3. Choose Difficulty (1 - Easy, 2 - Medium, 3 - Hard)\n");
         printf("4. Save Game\n");
         printf("5. Load Game\n");
-        printf("6. Exit\n");
+        printf("6. Make a Move\n");
+        printf("7. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
@@ -280,13 +305,18 @@ void menu()
         }
         else if (choice == 6)
         {
+            playerMove(currentSize);
+            printBoard(currentSize);
+        }
+        else if (choice == 7)
+        {
             printf("Exiting the game. Goodbye!\n");
         }
         else
         {
             printf("Invalid choice. Please try again.\n");
         }
-    } while (choice != 6);
+    } while (choice != 7);
 }
 
 int main()
