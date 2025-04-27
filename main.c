@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
 #define MAX_SIZE 16
 
 int board[MAX_SIZE][MAX_SIZE];
+int currentSize = 9;
 
 // initialize the sudoku board to 0s
 void initializeBoard(int size)
@@ -115,7 +117,6 @@ void fillDiagonal(int size, int boxSize)
 }
 
 // recursively fill remaining cells
-
 int fillRemaining(int size, int boxSize, int i, int j)
 {
     if (i == size)
@@ -174,19 +175,62 @@ void generateSudoku(int size, int difficulty)
 
     int k;
     if (difficulty == 1)
-        k = size * size / 4; // Easy
+        k = size * size / 4; // easy
     else if (difficulty == 2)
-        k = size * size / 3; // Medium
+        k = size * size / 3; // medium
     else
-        k = size * size / 2; // Hard
+        k = size * size / 2; // hard
 
     removeKDigits(size, k);
+}
+
+// save the current game to a file
+void saveGame(int size)
+{
+    FILE *fp = fopen("sudoku_save.txt", "w");
+    if (!fp)
+    {
+        printf("error saving game!\n");
+        return;
+    }
+    fprintf(fp, "%d\n", size);
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            fprintf(fp, "%d ", board[i][j]);
+        }
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+    printf("game saved successfully!\n");
+}
+
+// load a saved game from a file
+void loadGame()
+{
+    FILE *fp = fopen("sudoku_save.txt", "r");
+    if (!fp)
+    {
+        printf("no saved game found...\n");
+        return;
+    }
+    fscanf(fp, "%d", &currentSize);
+    for (int i = 0; i < currentSize; i++)
+    {
+        for (int j = 0; j < currentSize; j++)
+        {
+            fscanf(fp, "%d", &board[i][j]);
+        }
+    }
+    fclose(fp);
+    printf("game loaded successfully!\n");
+    printBoard(currentSize);
 }
 
 void menu()
 {
     int choice;
-    int size = 9;
     int difficulty = 1;
 
     do
@@ -195,23 +239,25 @@ void menu()
         printf("1. New Game\n");
         printf("2. Choose Board Size (4x4, 9x9, 16x16)\n");
         printf("3. Choose Difficulty (1 - Easy, 2 - Medium, 3 - Hard)\n");
-        printf("4. Exit\n");
+        printf("4. Save Game\n");
+        printf("5. Load Game\n");
+        printf("6. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
         if (choice == 1)
         {
-            generateSudoku(size, difficulty);
-            printBoard(size);
+            generateSudoku(currentSize, difficulty);
+            printBoard(currentSize);
         }
         else if (choice == 2)
         {
             printf("Choose size (4, 9, 16): ");
-            scanf("%d", &size);
-            if (size != 4 && size != 9 && size != 16)
+            scanf("%d", &currentSize);
+            if (currentSize != 4 && currentSize != 9 && currentSize != 16)
             {
                 printf("Invalid size. Setting to 9x9.\n");
-                size = 9;
+                currentSize = 9;
             }
         }
         else if (choice == 3)
@@ -226,13 +272,21 @@ void menu()
         }
         else if (choice == 4)
         {
+            saveGame(currentSize);
+        }
+        else if (choice == 5)
+        {
+            loadGame();
+        }
+        else if (choice == 6)
+        {
             printf("Exiting the game. Goodbye!\n");
         }
         else
         {
             printf("Invalid choice. Please try again.\n");
         }
-    } while (choice != 4);
+    } while (choice != 6);
 }
 
 int main()
