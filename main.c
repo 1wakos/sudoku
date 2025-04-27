@@ -252,6 +252,31 @@ void playerMove(int size)
     }
 }
 
+// allow player to delete a move
+void deleteMove(int size)
+{
+    int row, col;
+    printf("Enter row (0-%d) and column (0-%d) to delete: ", size - 1, size - 1);
+    scanf("%d %d", &row, &col);
+
+    if (row >= 0 && row < size && col >= 0 && col < size)
+    {
+        if (board[row][col] != 0)
+        {
+            board[row][col] = 0;
+            printf("Value deleted.\n");
+        }
+        else
+        {
+            printf("Cell already empty!\n");
+        }
+    }
+    else
+    {
+        printf("Invalid input!\n");
+    }
+}
+
 void menu()
 {
     int choice;
@@ -266,7 +291,8 @@ void menu()
         printf("4. Save Game\n");
         printf("5. Load Game\n");
         printf("6. Make a Move\n");
-        printf("7. Exit\n");
+        printf("7. Delete a Move\n");
+        printf("8. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
@@ -310,13 +336,18 @@ void menu()
         }
         else if (choice == 7)
         {
+            deleteMove(currentSize);
+            printBoard(currentSize);
+        }
+        else if (choice == 8)
+        {
             printf("Exiting the game. Goodbye!\n");
         }
         else
         {
             printf("Invalid choice. Please try again.\n");
         }
-    } while (choice != 7);
+    } while (choice != 8);
 }
 
 int main()
