@@ -1,165 +1,185 @@
+#include "sudoku.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "sudoku.h"
 
-int board[MAX_SIZE][MAX_SIZE];
-int currentSize = 9;
-
-// --- functions implementation ---
-
-// initialize the sudoku board to 0s
-void initializeBoard(int size)
+Sudoku *createSudoku(int size)
 {
+    Sudoku *sudoku = malloc(sizeof(Sudoku));
+    if (!sudoku)
+    {
+        return NULL;
+    }
+    sudoku->size = size;
+    sudoku->boxSize = (size == 4) ? 2 : (size == 9) ? 3
+                                                    : 4;
+
+    sudoku->board = malloc(size * sizeof(int *));
+    if (!sudoku->board)
+    {
+        free(sudoku);
+        return NULL;
+    }
     for (int i = 0; i < size; i++)
     {
-        for (int j = 0; j < size; j++)
+        sudoku->board[i] = calloc(size, sizeof(int));
+        if (!sudoku->board[i])
         {
-            board[i][j] = 0;
+            // free previously allocated rows
+            for (int j = 0; j < i; j++)
+                free(sudoku->board[j]);
+            free(sudoku->board);
+            free(sudoku);
+            return NULL;
+        }
+    }
+    return sudoku;
+}
+
+void freeSudoku(Sudoku *sudoku)
+{
+    if (!sudoku)
+        return;
+    for (int i = 0; i < sudoku->size; i++)
+    {
+        free(sudoku->board[i]);
+    }
+    free(sudoku->board);
+    free(sudoku);
+}
+
+// --- FUNCTIONS IMPLEMENTATION ---
+
+// initialize the sudoku board to 0s
+void initializeBoard(Sudoku *sudoku)
+{
+    for (int i = 0; i < sudoku->size; i++)
+    {
+        for (int j = 0; j < sudoku->size; j++)
+        {
+            sudoku->board[i][j] = 0;
         }
     }
 }
 
 // print the sudoku board
-void printBoard(int size)
+void printBoard(const Sudoku *sudoku)
 {
     printf("\n");
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < sudoku->size; i++)
     {
-        for (int j = 0; j < size; j++)
+        for (int j = 0; j < sudoku->size; j++)
         {
-            if (board[i][j] == 0)
-            {
-                printf(". ");
-            }
-            else
-            {
-                printf("%d ", board[i][j]);
-            }
+            printf("%c ", sudoku->board[i][j] ? '0' + sudoku->board[i][j] : '.');
         }
         printf("\n");
     }
 }
 
 // check if num is unused in a given row
-int unUsedInRow(int size, int row, int num)
+int unUsedInRow(const Sudoku *sudoku, int row, int num)
 {
-    for (int col = 0; col < size; col++)
+    for (int col = 0; col < sudoku->size; col++)
     {
-        if (board[row][col] == num)
-        {
+        if (sudoku->board[row][col] == num)
             return 0;
-        }
     }
     return 1;
 }
 
 // check if num is unused in a given column
-int unUsedInCol(int size, int col, int num)
+int unUsedInCol(const Sudoku *sudoku, int col, int num)
 {
-    for (int row = 0; row < size; row++)
+    for (int row = 0; row < sudoku->size; row++)
     {
-        if (board[row][col] == num)
-        {
+        if (sudoku->board[row][col] == num)
             return 0;
-        }
     }
     return 1;
 }
 
 // check if num is unused in a 3x3 box
-int unUsedInBox(int boxSize, int rowStart, int colStart, int num)
+int unUsedInBox(const Sudoku *sudoku, int rowStart, int colStart, int num)
 {
-    for (int i = 0; i < boxSize; i++)
+    for (int i = 0; i < sudoku->boxSize; i++)
     {
-        for (int j = 0; j < boxSize; j++)
+        for (int j = 0; j < sudoku->boxSize; j++)
         {
-            if (board[rowStart + i][colStart + j] == num)
-            {
+            if (sudoku->board[rowStart + i][colStart + j] == num)
                 return 0;
-            }
         }
     }
     return 1;
 }
 
 // check if it is safe to put num in board[row][col]
-int checkIfSafe(int size, int boxSize, int row, int col, int num)
+int checkIfSafe(const Sudoku *sudoku, int row, int col, int num)
 {
-    return unUsedInRow(size, row, num) &&
-           unUsedInCol(size, col, num) &&
-           unUsedInBox(boxSize, row - row % boxSize, col - col % boxSize, num);
+    return unUsedInRow(sudoku, row, num) &&
+           unUsedInCol(sudoku, col, num) &&
+           unUsedInBox(sudoku, row - row % sudoku->boxSize, col - col % sudoku->boxSize, num);
 }
 
 // fill a 3x3 box starting at (rowStart, colStart)
-void fillBox(int boxSize, int rowStart, int colStart, int size)
+void fillBox(Sudoku *sudoku, int rowStart, int colStart)
 {
     int num;
-    for (int i = 0; i < boxSize; i++)
+    for (int i = 0; i < sudoku->boxSize; i++)
     {
-        for (int j = 0; j < boxSize; j++)
+        for (int j = 0; j < sudoku->boxSize; j++)
         {
             do
             {
-                num = rand() % size + 1;
-            } while (!unUsedInBox(boxSize, rowStart, colStart, num));
-            board[rowStart + i][colStart + j] = num;
+                num = rand() % sudoku->size + 1;
+            } while (!unUsedInBox(sudoku, rowStart, colStart, num));
+            sudoku->board[rowStart + i][colStart + j] = num;
         }
     }
 }
 
 // fill diagonal 3x3 boxes
-void fillDiagonal(int size, int boxSize)
+void fillDiagonal(Sudoku *sudoku)
 {
-    for (int i = 0; i < size; i += boxSize)
+    for (int i = 0; i < sudoku->size; i += sudoku->boxSize)
     {
-        fillBox(boxSize, i, i, size);
+        fillBox(sudoku, i, i);
     }
 }
 
 // recursively fill remaining cells
-int fillRemaining(int size, int boxSize, int i, int j)
+int fillRemaining(Sudoku *sudoku, int i, int j)
 {
-    if (i == size)
-    {
+    if (i == sudoku->size)
         return 1;
-    }
-    if (j == size)
-    {
-        return fillRemaining(size, boxSize, i + 1, 0);
-    }
-    if (board[i][j] != 0)
-    {
-        return fillRemaining(size, boxSize, i, j + 1);
-    }
+    if (j == sudoku->size)
+        return fillRemaining(sudoku, i + 1, 0);
+    if (sudoku->board[i][j] != 0)
+        return fillRemaining(sudoku, i, j + 1);
 
-    for (int num = 1; num <= size; num++)
+    for (int num = 1; num <= sudoku->size; num++)
     {
-        if (checkIfSafe(size, boxSize, i, j, num))
+        if (checkIfSafe(sudoku, i, j, num))
         {
-            board[i][j] = num;
-            if (fillRemaining(size, boxSize, i, j + 1))
-            {
+            sudoku->board[i][j] = num;
+            if (fillRemaining(sudoku, i, j + 1))
                 return 1;
-            }
-            board[i][j] = 0;
+            sudoku->board[i][j] = 0;
         }
     }
-
     return 0;
 }
 
 // remove k digits randomly to create a puzzle
-void removeKDigits(int size, int k)
+void removeKDigits(Sudoku *sudoku, int k)
 {
     while (k > 0)
     {
-        int cellId = rand() % (size * size);
-        int i = cellId / size;
-        int j = cellId % size;
-        if (board[i][j] != 0)
+        int cellId = rand() % (sudoku->size * sudoku->size);
+        int i = cellId / sudoku->size;
+        int j = cellId % sudoku->size;
+        if (sudoku->board[i][j] != 0)
         {
-            board[i][j] = 0;
+            sudoku->board[i][j] = 0;
             k--;
         }
     }
@@ -167,12 +187,14 @@ void removeKDigits(int size, int k)
 
 void generateSudoku(int size, int difficulty)
 {
+    Sudoku *sudoku = createSudoku(size);
+
     int boxSize = (size == 4) ? 2 : (size == 9) ? 3
                                                 : 4;
 
-    initializeBoard(size);
-    fillDiagonal(size, boxSize);
-    fillRemaining(size, boxSize, 0, 0);
+    initializeBoard(sudoku);
+    fillDiagonal(sudoku);
+    fillRemaining(sudoku, 0, 0);
 
     int k;
     if (difficulty == 1)
@@ -182,89 +204,111 @@ void generateSudoku(int size, int difficulty)
     else
         k = size * size / 2; // hard
 
-    removeKDigits(size, k);
+    removeKDigits(sudoku, k);
+
+    // generating the board
+
+    freeSudoku(sudoku);
 }
 
 // save the current game to a file
-void saveGame(int size)
+void saveGame(const Sudoku *sudoku, const char *filename)
 {
-    FILE *fp = fopen("sudoku_save.txt", "w");
+    FILE *fp = fopen(filename, "w");
     if (!fp)
     {
-        printf("error saving game!\n");
+        printf("Error saving game!\n");
         return;
     }
-    fprintf(fp, "%d\n", size);
-    for (int i = 0; i < size; i++)
+    fprintf(fp, "%d\n", sudoku->size);
+    for (int i = 0; i < sudoku->size; i++)
     {
-        for (int j = 0; j < size; j++)
+        for (int j = 0; j < sudoku->size; j++)
         {
-            fprintf(fp, "%d ", board[i][j]);
+            fprintf(fp, "%d ", sudoku->board[i][j]);
         }
         fprintf(fp, "\n");
     }
     fclose(fp);
-    printf("game saved successfully!\n");
+    printf("Game saved successfully!\n");
 }
 
 // load a saved game from a file
-void loadGame()
+Sudoku *loadGame(const char *filename)
 {
-    FILE *fp = fopen("sudoku_save.txt", "r");
+    FILE *fp = fopen(filename, "r");
     if (!fp)
     {
-        printf("no saved game found...\n");
-        return;
+        printf("No saved game found...\n");
+        return NULL;
     }
-    fscanf(fp, "%d", &currentSize);
-    for (int i = 0; i < currentSize; i++)
+    int size;
+    fscanf(fp, "%d", &size);
+
+    Sudoku *sudoku = createSudoku(size);
+    if (!sudoku)
     {
-        for (int j = 0; j < currentSize; j++)
+        fclose(fp);
+        return NULL;
+    }
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
         {
-            fscanf(fp, "%d", &board[i][j]);
+            fscanf(fp, "%d", &sudoku->board[i][j]);
         }
     }
     fclose(fp);
-    printf("game loaded successfully!\n");
-    printBoard(currentSize);
+    return sudoku;
 }
 
 // allow player to input a move
-void playerMove(int size)
+void playerMove(Sudoku *sudoku)
 {
-    int row, col, val;
-    printf("Enter row (0-%d), column (0-%d), and value (1-%d): ", size - 1, size - 1, size);
-    scanf("%d %d %d", &row, &col, &val);
+    int row, col, num;
 
-    if (row >= 0 && row < size && col >= 0 && col < size && val >= 1 && val <= size)
+    printf("Enter row (0-%d), column (0-%d), and number (1-%d): ", sudoku->size - 1, sudoku->size - 1, sudoku->size);
+    int result = scanf("%d %d %d", &row, &col, &num); // if num is correct
+    if (result != 3)
     {
-        if (board[row][col] == 0)
+        printf("Invalid input! Please enter three integers (row, column, number).\n");
+        while (getchar() != '\n')
+            ;
+        return;
+    }
+
+    // if nums are in range
+    if (row >= 0 && row < sudoku->size && col >= 0 && col < sudoku->size && num >= 1 && num <= sudoku->size)
+    {
+        if (checkIfSafe(sudoku, row, col, num))
         {
-            board[row][col] = val;
+            sudoku->board[row][col] = num; // save num
+            printf("Correct move!\n");
         }
         else
         {
-            printf("Cell already filled. Choose another one!\n");
+            printf("Invalid move! The number cannot be placed here:(\n");
         }
     }
     else
     {
-        printf("Invalid input!\n");
+        printf("Invalid input! Row, column, or number out of bounds.\n");
     }
+    printBoard(sudoku);
 }
 
 // allow player to delete a move
-void deleteMove(int size)
+void deleteMove(Sudoku *sudoku)
 {
     int row, col;
-    printf("Enter row (0-%d) and column (0-%d) to delete: ", size - 1, size - 1);
+    printf("Enter row (0-%d) and column (0-%d) to delete: ", sudoku->size - 1, sudoku->size - 1);
     scanf("%d %d", &row, &col);
 
-    if (row >= 0 && row < size && col >= 0 && col < size)
+    if (row >= 0 && row < sudoku->size && col >= 0 && col < sudoku->size)
     {
-        if (board[row][col] != 0)
+        if (sudoku->board[row][col] != 0)
         {
-            board[row][col] = 0;
+            sudoku->board[row][col] = 0;
             printf("Value deleted.\n");
         }
         else
@@ -279,13 +323,13 @@ void deleteMove(int size)
 }
 
 // check if the board is completely filled
-int checkWin(int size)
+int checkWin(const Sudoku *sudoku)
 {
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < sudoku->size; i++)
     {
-        for (int j = 0; j < size; j++)
+        for (int j = 0; j < sudoku->size; j++)
         {
-            if (board[i][j] == 0)
+            if (sudoku->board[i][j] == 0)
             {
                 return 0; // not finished yet
             }
