@@ -20,6 +20,7 @@ void initializeBoard(int size)
 // print the sudoku board
 void printBoard(int size)
 {
+    printf("\n");
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
@@ -64,11 +65,11 @@ int unUsedInCol(int size, int col, int num)
 }
 
 // check if num is unused in a 3x3 box
-int unUsedInBox(int rowStart, int colStart, int num)
+int unUsedInBox(int boxSize, int rowStart, int colStart, int num)
 {
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < boxSize; i++)
     {
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < boxSize; j++)
         {
             if (board[rowStart + i][colStart + j] == num)
             {
@@ -80,61 +81,62 @@ int unUsedInBox(int rowStart, int colStart, int num)
 }
 
 // check if it is safe to put num in board[row][col]
-int checkIfSafe(int size, int row, int col, int num)
+int checkIfSafe(int size, int boxSize, int row, int col, int num)
 {
     return unUsedInRow(size, row, num) &&
            unUsedInCol(size, col, num) &&
-           unUsedInBox(row - row % 3, col - col % 3, num);
+           unUsedInBox(boxSize, row - row % boxSize, col - col % boxSize, num);
 }
 
 // fill a 3x3 box starting at (rowStart, colStart)
-void fillBox(int rowStart, int colStart)
+void fillBox(int boxSize, int rowStart, int colStart, int size)
 {
     int num;
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < boxSize; i++)
     {
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < boxSize; j++)
         {
             do
             {
-                num = rand() % 9 + 1;
-            } while (!unUsedInBox(rowStart, colStart, num));
+                num = rand() % size + 1;
+            } while (!unUsedInBox(boxSize, rowStart, colStart, num));
             board[rowStart + i][colStart + j] = num;
         }
     }
 }
 
 // fill diagonal 3x3 boxes
-void fillDiagonal()
+void fillDiagonal(int size, int boxSize)
 {
-    for (int i = 0; i < 9; i += 3)
+    for (int i = 0; i < size; i += boxSize)
     {
-        fillBox(i, i);
+        fillBox(boxSize, i, i, size);
     }
 }
 
 // recursively fill remaining cells
-int fillRemaining(int i, int j)
+
+int fillRemaining(int size, int boxSize, int i, int j)
 {
-    if (i == 9)
+    if (i == size)
     {
         return 1;
     }
-    if (j == 9)
+    if (j == size)
     {
-        return fillRemaining(i + 1, 0);
+        return fillRemaining(size, boxSize, i + 1, 0);
     }
     if (board[i][j] != 0)
     {
-        return fillRemaining(i, j + 1);
+        return fillRemaining(size, boxSize, i, j + 1);
     }
 
-    for (int num = 1; num <= 9; num++)
+    for (int num = 1; num <= size; num++)
     {
-        if (checkIfSafe(9, i, j, num))
+        if (checkIfSafe(size, boxSize, i, j, num))
         {
             board[i][j] = num;
-            if (fillRemaining(i, j + 1))
+            if (fillRemaining(size, boxSize, i, j + 1))
             {
                 return 1;
             }
@@ -146,13 +148,13 @@ int fillRemaining(int i, int j)
 }
 
 // remove k digits randomly to create a puzzle
-void removeKDigits(int k)
+void removeKDigits(int size, int k)
 {
     while (k > 0)
     {
-        int cellId = rand() % 81;
-        int i = cellId / 9;
-        int j = cellId % 9;
+        int cellId = rand() % (size * size);
+        int i = cellId / size;
+        int j = cellId % size;
         if (board[i][j] != 0)
         {
             board[i][j] = 0;
@@ -161,18 +163,81 @@ void removeKDigits(int k)
     }
 }
 
+void generateSudoku(int size, int difficulty)
+{
+    int boxSize = (size == 4) ? 2 : (size == 9) ? 3
+                                                : 4;
+
+    initializeBoard(size);
+    fillDiagonal(size, boxSize);
+    fillRemaining(size, boxSize, 0, 0);
+
+    int k;
+    if (difficulty == 1)
+        k = size * size / 4; // Easy
+    else if (difficulty == 2)
+        k = size * size / 3; // Medium
+    else
+        k = size * size / 2; // Hard
+
+    removeKDigits(size, k);
+}
+
+void menu()
+{
+    int choice;
+    int size = 9;
+    int difficulty = 1;
+
+    do
+    {
+        printf("\n--- Sudoku Menu ---\n");
+        printf("1. New Game\n");
+        printf("2. Choose Board Size (4x4, 9x9, 16x16)\n");
+        printf("3. Choose Difficulty (1 - Easy, 2 - Medium, 3 - Hard)\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        if (choice == 1)
+        {
+            generateSudoku(size, difficulty);
+            printBoard(size);
+        }
+        else if (choice == 2)
+        {
+            printf("Choose size (4, 9, 16): ");
+            scanf("%d", &size);
+            if (size != 4 && size != 9 && size != 16)
+            {
+                printf("Invalid size. Setting to 9x9.\n");
+                size = 9;
+            }
+        }
+        else if (choice == 3)
+        {
+            printf("Choose difficulty (1 - Easy, 2 - Medium, 3 - Hard): ");
+            scanf("%d", &difficulty);
+            if (difficulty < 1 || difficulty > 3)
+            {
+                printf("Invalid difficulty. Setting to Easy.\n");
+                difficulty = 1;
+            }
+        }
+        else if (choice == 4)
+        {
+            printf("Exiting the game. Goodbye!\n");
+        }
+        else
+        {
+            printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 4);
+}
+
 int main()
 {
     srand(time(0));
-    printf("sudoku\n");
-
-    int size = 9;
-    int k = 20; // number of digits to remove
-    initializeBoard(size);
-    fillDiagonal();
-    fillRemaining(0, 0);
-    removeKDigits(k);
-    printBoard(size);
-
+    menu();
     return 0;
 }
