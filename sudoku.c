@@ -11,8 +11,13 @@ Sudoku *createSudoku(int size)
         return NULL;
     }
     sudoku->size = size;
-    sudoku->boxSize = (size == 4) ? 2 : (size == 9) ? 3
-                                                    : 4;
+
+    if (size == 4)
+        sudoku->boxSize = 2;
+    else if (size == 9)
+        sudoku->boxSize = 3;
+    else
+        sudoku->boxSize = 4;
 
     sudoku->board = malloc(size * sizeof(int *));
     if (!sudoku->board)
@@ -70,7 +75,10 @@ void printBoard(const Sudoku *sudoku)
     {
         for (int j = 0; j < sudoku->size; j++)
         {
-            printf("%c ", sudoku->board[i][j] ? '0' + sudoku->board[i][j] : '.');
+            if (sudoku->board[i][j] != 0)
+                printf("%d ", sudoku->board[i][j]);
+            else
+                printf(". ");
         }
         printf("\n");
     }
@@ -131,7 +139,9 @@ void fillBox(Sudoku *sudoku, int rowStart, int colStart)
             do
             {
                 num = rand() % sudoku->size + 1;
+                // repeat if the number is already used inside this box
             } while (!unUsedInBox(sudoku, rowStart, colStart, num));
+            // place the number into the correct position inside the box
             sudoku->board[rowStart + i][colStart + j] = num;
         }
     }
@@ -151,8 +161,11 @@ int fillRemaining(Sudoku *sudoku, int i, int j)
 {
     if (i == sudoku->size)
         return 1;
+
+    // if we reach the end of a row, move to the next row
     if (j == sudoku->size)
         return fillRemaining(sudoku, i + 1, 0);
+    // skip cells that are already filled (like diagonal boxes)
     if (sudoku->board[i][j] != 0)
         return fillRemaining(sudoku, i, j + 1);
 
@@ -174,9 +187,10 @@ void removeKDigits(Sudoku *sudoku, int k)
 {
     while (k > 0)
     {
+        // pick a random cell index
         int cellId = rand() % (sudoku->size * sudoku->size);
-        int i = cellId / sudoku->size;
-        int j = cellId % sudoku->size;
+        int i = cellId / sudoku->size; // calculate row
+        int j = cellId % sudoku->size; // calculate column
         if (sudoku->board[i][j] != 0)
         {
             sudoku->board[i][j] = 0;
@@ -189,8 +203,13 @@ void generateSudoku(int size, int difficulty)
 {
     Sudoku *sudoku = createSudoku(size);
 
-    int boxSize = (size == 4) ? 2 : (size == 9) ? 3
-                                                : 4;
+    int boxSize;
+    if (size == 4)
+        boxSize = 2;
+    else if (size == 9)
+        boxSize = 3;
+    else
+        boxSize = 4;
 
     initializeBoard(sudoku);
     fillDiagonal(sudoku);
