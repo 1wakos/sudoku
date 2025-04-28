@@ -1,14 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include "sudoku.h"
+#include <ctime>
 
-// user menu
 void menu()
 {
     Sudoku *sudoku = NULL;
     int difficulty = 1;
     int choice;
+    time_t startTime = 0, endTime = 0; // zmienne na czas gry
 
     do
     {
@@ -43,15 +41,30 @@ void menu()
 
             printf("Choose difficulty (1 - Easy, 2 - Medium, 3 - Hard): ");
             scanf("%d", &difficulty);
-            int k = (difficulty == 1) ? size * size / 4 : (difficulty == 2) ? size * size / 3
-                                                                            : size * size / 2;
+            int k;
+            if (difficulty == 1)
+            {
+                k = size * size / 4;
+            }
+            else if (difficulty == 2)
+            {
+                k = size * size / 3;
+            }
+            else
+            {
+                k = size * size / 2;
+            }
+
             removeKDigits(sudoku, k);
+
+            startTime = time(NULL); // start time for the game
         }
         else if (choice == 2)
         {
             if (sudoku)
                 freeSudoku(sudoku);
             sudoku = loadGame("sudoku_save.txt");
+            startTime = time(NULL); // start counting after loading
         }
         else if (choice == 3)
         {
@@ -78,11 +91,8 @@ void menu()
 
     if (sudoku)
         freeSudoku(sudoku);
-}
 
-int main()
-{
-    srand(time(NULL));
-    menu();
-    return 0;
+    endTime = time(NULL);                           // save the duration of the game
+    double duration = difftime(endTime, startTime); // in seconds
+    printf("\nGame duration: %.0f seconds.\n", duration);
 }
