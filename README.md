@@ -1,5 +1,16 @@
 # Sudoku
 
+Proszę o pozytywne rozpatrzenie kodu... Pappuccino:)
+
+![ ](https://github.com/user-attachments/assets/fccb4422-9aea-4d95-a255-bb6e70b9d236)
+
+
+
+
+
+
+
+
 This project implements a Sudoku game in C language in terminal.
 
 ### 📋 Project Description
