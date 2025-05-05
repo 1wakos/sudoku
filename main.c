@@ -1,5 +1,7 @@
 #include "sudoku.h"
-#include <ctime>
+#include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 void menu()
 {
@@ -95,4 +97,9 @@ void menu()
     endTime = time(NULL);                           // save the duration of the game
     double duration = difftime(endTime, startTime); // in seconds
     printf("\nGame duration: %.0f seconds.\n", duration);
+}
+
+int main() {
+    menu();
+    return 0;
 }
